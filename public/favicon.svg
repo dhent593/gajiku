@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded square container -->
+  <rect width="512" height="512" rx="112" fill="url(#bg-gradient)" />
+  <!-- Banknote -->
+  <rect x="176" y="112" width="160" height="96" rx="12" fill="#ffffff" opacity="0.9" />
+  <circle cx="256" cy="160" r="20" fill="#10b981" />
+  <!-- Wallet body -->
+  <path d="M 112,208 C 112,190.3 126.3,176 144,176 L 368,176 C 385.7,176 400,190.3 400,208 L 400,368 C 400,385.7 385.7,400 368,400 L 144,400 C 126.3,400 112,385.7 112,368 Z" fill="#ffffff" />
+  <!-- Wallet fold/flap -->
+  <path d="M 288,240 L 384,240 C 392.8,240 400,247.2 400,256 L 400,320 C 400,328.8 392.8,336 384,336 L 288,336 C 279.2,336 272,328.8 272,320 L 272,256 C 272,247.2 279.2,240 288,240 Z" fill="#1e3a8a" />
+  <!-- Wallet clasp button -->
+  <circle cx="312" cy="288" r="14" fill="#fbbf24" />
+</svg>
