@@ -375,7 +375,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
       </div>
 
       {/* Upload & Stat Grid */}
-      <div className="no-print" style={{
+      <div className="no-print grid-two-cols" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
         gap: '2rem'
@@ -496,7 +496,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
       </div>
 
       {/* Month Filter & Print Panel */}
-      <div className="glass-card no-print" style={{ 
+      <div className="glass-card no-print filter-print-panel" style={{ 
         padding: '1.25rem 1.5rem', 
         display: 'flex', 
         justifyContent: 'space-between', 

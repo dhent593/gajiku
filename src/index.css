@@ -727,3 +727,130 @@ a:hover {
 .text-right { text-align: right; }
 .w-full { width: 100%; }
 .mt-4 { margin-top: 1rem; }
+
+/* Responsive Styles for Mobile and Tablet */
+@media (max-width: 768px) {
+  /* Container general padding */
+  .container {
+    padding: 1rem;
+  }
+
+  /* Header Bar */
+  .header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  /* Upload & Status Grid */
+  .grid-two-cols {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  /* Month Filter & Print Panel */
+  .filter-print-panel {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  
+  /* Modal responsive sizes */
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  .modal-content {
+    max-height: 95vh;
+  }
+  .modal-body {
+    padding: 0.75rem;
+  }
+  .modal-header, .modal-footer {
+    padding: 1rem;
+  }
+
+  /* High Fidelity Slip Gaji mobile overrides */
+  .slip-container {
+    padding: 1.25rem;
+  }
+  .slip-company-name {
+    font-size: 1.125rem;
+  }
+  .slip-company-sub {
+    font-size: 0.6875rem;
+  }
+  .slip-header .flex {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .slip-header .text-right {
+    text-align: left !important;
+  }
+  .slip-title {
+    font-size: 1.125rem;
+    margin: 0.75rem 0;
+  }
+  .slip-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+  .slip-meta-label {
+    width: 110px;
+    font-size: 0.8125rem;
+  }
+  .slip-meta-value {
+    font-size: 0.8125rem;
+  }
+  .slip-section-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .slip-summary-box {
+    padding: 0.75rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  .slip-summary-label {
+    font-size: 0.8125rem;
+  }
+  .slip-summary-val {
+    font-size: 1.125rem;
+  }
+  .slip-terbilang {
+    font-size: 0.7rem;
+    margin-bottom: 1rem;
+  }
+  .slip-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    text-align: left;
+    margin-top: 1.5rem;
+  }
+  .slip-sign-space {
+    height: 40px;
+  }
+  
+  /* Search & Filter Bar */
+  .search-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-input-wrapper {
+    width: 100%;
+  }
+  .filter-select {
+    width: 100%;
+  }
+
+  /* Table styling scroll message helper */
+  .table-container::after {
+    content: "← Geser tabel untuk melihat selengkapnya →";
+    display: block;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    padding: 0.5rem;
+    font-style: italic;
+  }
+}
