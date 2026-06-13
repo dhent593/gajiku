@@ -136,7 +136,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               <input
                 type="text"
                 className="form-input"
-                placeholder="arif.setiawan2209@gmail.com"
+                placeholder="Masukkan email atau username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ paddingLeft: '2.75rem' }}
