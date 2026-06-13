@@ -259,7 +259,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         scale: 2.2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        windowWidth: 800
       };
       
       const canvas = await html2canvas(captureEl, options);

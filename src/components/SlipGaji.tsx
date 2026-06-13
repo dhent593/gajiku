@@ -116,7 +116,8 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
         scale: 2.5, // High resolution
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        windowWidth: 800
       };
       
       const canvas = await html2canvas(slipRef.current, options);

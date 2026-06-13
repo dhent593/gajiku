@@ -729,7 +729,7 @@ a:hover {
 .mt-4 { margin-top: 1rem; }
 
 /* Responsive Styles for Mobile and Tablet */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   /* Container general padding */
   .container {
     padding: 1rem;
