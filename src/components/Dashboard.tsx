@@ -51,7 +51,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         const { data, error } = await supabase
           .from('slips')
           .select('*')
-          .order('nama', { ascending: true });
+          .order('urut', { ascending: true });
 
         if (error) throw error;
         setSlips(data || []);
@@ -193,7 +193,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         const { data: insertedData, error: insertError } = await supabase
           .from('slips')
           .insert(
-            parsedSlips.map(s => ({
+            parsedSlips.map((s, index) => ({
               nik: s.nik,
               nama: s.nama,
               jabatan: s.jabatan,
@@ -201,7 +201,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
               gaji_bersih: s.gaji_bersih,
               no_wa: s.no_wa,
               no_rek: s.no_rek,
-              details: s.details
+              details: s.details,
+              urut: index
             }))
           )
           .select();
@@ -211,9 +212,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         showStatus('success', `Berhasil mengimpor ${insertedData?.length || parsedSlips.length} data penggajian karyawan untuk periode ${importedMonth}!`);
       } else {
         // Local fallback storage
-        const mockSlipsWithId: SlipData[] = parsedSlips.map(s => ({
+        const mockSlipsWithId: SlipData[] = parsedSlips.map((s, index) => ({
           ...s,
-          id: crypto.randomUUID()
+          id: crypto.randomUUID(),
+          urut: index
         }));
 
         // Filter out old records for the same month

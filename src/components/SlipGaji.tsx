@@ -11,6 +11,7 @@ export interface SlipData {
   gaji_bersih: number;
   no_wa?: string;
   no_rek?: string;
+  urut?: number;
   details: Record<string, any>;
 }
 

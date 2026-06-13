@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.slips (
     no_wa TEXT,
     no_rek TEXT,
     details JSONB NOT NULL,
+    urut INT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 

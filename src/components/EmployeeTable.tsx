@@ -18,6 +18,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJabatan, setSelectedJabatan] = useState('ALL');
+  const [sortBy, setSortBy] = useState('default');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Get unique list of Jabatan for the dropdown filter
@@ -30,6 +31,26 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       slip.nik.includes(searchTerm);
     const matchJabatan = selectedJabatan === 'ALL' || slip.jabatan === selectedJabatan;
     return matchSearch && matchJabatan;
+  });
+
+  // Sort the filtered slips
+  const sortedSlips = [...filteredSlips].sort((a, b) => {
+    if (sortBy === 'name-asc') {
+      return a.nama.localeCompare(b.nama);
+    }
+    if (sortBy === 'name-desc') {
+      return b.nama.localeCompare(a.nama);
+    }
+    if (sortBy === 'nik-asc') {
+      return a.nik.localeCompare(b.nik, undefined, { numeric: true });
+    }
+    if (sortBy === 'nik-desc') {
+      return b.nik.localeCompare(a.nik, undefined, { numeric: true });
+    }
+    // Default: Sort by original Excel row index ('urut')
+    const urutA = a.urut !== undefined ? a.urut : 0;
+    const urutB = b.urut !== undefined ? b.urut : 0;
+    return urutA - urutB;
   });
 
   const handleCopyLink = (slip: SlipData) => {
@@ -52,7 +73,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         gap: '1rem'
       }}>
         <h3 style={{ fontSize: '1.25rem', color: '#1e3a8a' }}>Daftar Slip Gaji Karyawan</h3>
-        <span className="badge badge-info">{filteredSlips.length} Karyawan</span>
+        <span className="badge badge-info">{sortedSlips.length} Karyawan</span>
       </div>
 
       {/* Search & Filter Bar */}
@@ -81,10 +102,24 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
             ))}
           </select>
         </div>
+
+        <div>
+          <select
+            className="filter-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="default">Urutan Excel</option>
+            <option value="name-asc">Nama (A - Z)</option>
+            <option value="name-desc">Nama (Z - A)</option>
+            <option value="nik-asc">NIK (Terkecil)</option>
+            <option value="nik-desc">NIK (Terbesar)</option>
+          </select>
+        </div>
       </div>
 
       {/* Table */}
-      {filteredSlips.length === 0 ? (
+      {sortedSlips.length === 0 ? (
         <div className="text-center" style={{ padding: '3rem 1rem', color: 'var(--text-muted)' }}>
           Tidak ada data karyawan yang cocok dengan pencarian/filter.
         </div>
@@ -103,7 +138,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {filteredSlips.map(slip => (
+              {sortedSlips.map(slip => (
                 <tr key={slip.id || `${slip.nik}-${slip.bulan}`}>
                   <td style={{ fontWeight: 600 }}>{slip.nik}</td>
                   <td>
