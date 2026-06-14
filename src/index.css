@@ -732,10 +732,9 @@ a:hover {
 .filter-print-panel {
   padding: 1.25rem 1.5rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
   border-left: 4px solid var(--primary);
   margin-top: 1rem;
 }
@@ -744,8 +743,7 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex: 1;
-  min-width: 280px;
+  width: 100%;
 }
 
 .filter-print-panel .filter-icon-wrapper {
@@ -776,6 +774,7 @@ a:hover {
   display: flex;
   gap: 1rem;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
 }
 
