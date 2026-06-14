@@ -162,7 +162,7 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
   return (
     <div>
       {/* Top action bar - Hidden during print */}
-      <div className="flex justify-between items-center mb-4 no-print" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+      <div className="flex justify-between items-center no-print" style={{ gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1.125rem', color: 'var(--text-main)' }}>
           {isPublicView ? 'Slip Gaji Online' : 'Preview Slip Gaji'}
         </h3>
