@@ -987,3 +987,97 @@ a:hover {
     justify-content: center;
   }
 }
+
+/* Desktop/Mobile views for Kas Ledger */
+.kas-card-list {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+  .kas-desktop-table {
+    display: none !important;
+  }
+  
+  .kas-card-list {
+    display: flex;
+  }
+  
+  .kas-mobile-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .kas-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .kas-mobile-title {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.875rem;
+    line-height: 1.25;
+  }
+  
+  .kas-mobile-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  
+  .kas-mobile-amount-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .kas-mobile-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  
+  .kas-mobile-badge.masuk {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+  }
+  
+  .kas-mobile-badge.keluar {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+  
+  .kas-mobile-amount {
+    font-weight: 700;
+    font-size: 0.9375rem;
+  }
+  
+  .kas-mobile-balance-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+  
+  .kas-mobile-notes {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: #f8fafc;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid #cbd5e1;
+  }
+}

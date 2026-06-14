@@ -4,7 +4,7 @@ import { parseExcelKas } from '../utils/excelParser';
 import type { ParsedKasEntry } from '../utils/excelParser';
 import { formatRupiah } from './SlipGaji';
 import { 
-  Upload, Download, Search, Plus, Edit2, Trash2, Calendar, Link, Check, AlertCircle, RefreshCw
+  Upload, Download, Search, Plus, Edit2, Trash2, Calendar, Link, Check, AlertCircle, RefreshCw, Share2
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -379,6 +379,21 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
     } finally {
       setSyncing(false);
     }
+  };
+
+  // Copy share preview link handler
+  const handleCopyShareLink = (monthVal: string) => {
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/kas/preview?month=${encodeURIComponent(monthVal)}`;
+    
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        showStatus('success', `Link preview kas (${monthVal === 'ALL' ? 'Semua Periode' : monthVal}) berhasil disalin ke clipboard!`);
+      })
+      .catch(err => {
+        console.error('Failed to copy link:', err);
+        showStatus('error', 'Gagal menyalin link: ' + err.message);
+      });
   };
 
   // Excel Export handler
@@ -757,6 +772,28 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
         <div className="actions-section">
           <button 
             className="btn btn-outline"
+            onClick={() => handleCopyShareLink('ALL')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+            title="Salin link preview seluruh kas"
+          >
+            <Share2 size={16} />
+            Share Kas (Semua)
+          </button>
+
+          {selectedMonth !== 'ALL' && (
+            <button 
+              className="btn btn-outline"
+              onClick={() => handleCopyShareLink(selectedMonth)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+              title={`Salin link preview kas bulan ${selectedMonth}`}
+            >
+              <Share2 size={16} />
+              Share Kas ({selectedMonth})
+            </button>
+          )}
+
+          <button 
+            className="btn btn-outline"
             onClick={handleExportExcel}
             style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
           >
@@ -844,7 +881,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
                           <Edit2 size={13} />
                         </button>
                         <button 
-                          className="btn btn-outline btn-sm btn-icon btn-danger"
+                          className="btn btn-outline btn-sm btn-icon"
                           onClick={() => handleDeleteEntry(item)}
                           title="Hapus Transaksi"
                           style={{ padding: '0.25rem', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}
