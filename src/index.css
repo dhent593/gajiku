@@ -728,6 +728,101 @@ a:hover {
 .w-full { width: 100%; }
 .mt-4 { margin-top: 1rem; }
 
+/* Month Filter & Print Panel */
+.filter-print-panel {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-left: 4px solid var(--primary);
+  margin-top: 1rem;
+}
+
+.filter-print-panel .filter-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 280px;
+}
+
+.filter-print-panel .filter-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background-color: var(--primary-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.filter-print-panel .filter-select-wrapper {
+  flex: 1;
+}
+
+.filter-print-panel .filter-select-element {
+  width: 100%;
+  max-width: 320px;
+  border: 1px solid var(--border-color);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.filter-print-panel .actions-section {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-print-panel .print-all-btn {
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+/* Admin Navigation Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  background-color: var(--primary-glow);
+  color: var(--primary);
+}
+
+.tab-btn.active {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
 /* Responsive Styles for Mobile and Tablet */
 @media screen and (max-width: 768px) {
   /* Container general padding */
@@ -752,6 +847,28 @@ a:hover {
   .filter-print-panel {
     flex-direction: column;
     align-items: stretch !important;
+    padding: 1rem !important;
+  }
+  .filter-print-panel .filter-section {
+    min-width: 0 !important;
+    width: 100%;
+  }
+  .filter-print-panel .filter-select-element {
+    max-width: 100% !important;
+  }
+  .filter-print-panel .actions-section {
+    flex-direction: column;
+    align-items: stretch !important;
+    width: 100%;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  .filter-print-panel .actions-section span {
+    text-align: center;
+  }
+  .filter-print-panel .print-all-btn {
+    width: 100%;
+    justify-content: center;
   }
   
   /* Modal responsive sizes */
@@ -852,5 +969,18 @@ a:hover {
     color: var(--text-muted);
     padding: 0.5rem;
     font-style: italic;
+  }
+
+  /* Admin tabs mobile overrides */
+  .admin-tabs {
+    flex-direction: column;
+    align-items: stretch;
+    border-bottom: none;
+    padding-bottom: 0;
+    gap: 0.5rem;
+  }
+  .tab-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

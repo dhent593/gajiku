@@ -193,3 +193,185 @@ export const parseExcelPayroll = (arrayBuffer: ArrayBuffer, customMonth?: string
     }
   });
 };
+
+export interface ParsedKasEntry {
+  tanggal: string; // YYYY-MM-DD format
+  keterangan: string;
+  uang_masuk: number;
+  uang_keluar: number;
+  saldo_akhir: number;
+  bukti_transfer: string;
+  catatan: string;
+}
+
+export const parseIndonesianCurrency = (val: any): number => {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === 'number') return val;
+  const str = val.toString().trim();
+  if (!str || str === '-') return 0;
+  
+  let isNegative = false;
+  let norm = str.replace(/Rp/gi, '').replace(/\s/g, '');
+  if (norm.startsWith('-') || (norm.startsWith('(') && norm.endsWith(')'))) {
+    isNegative = true;
+  }
+  norm = norm.replace(/[^0-9.,-]/g, '');
+  
+  const lastComma = norm.lastIndexOf(',');
+  const lastDot = norm.lastIndexOf('.');
+  
+  if (lastComma > lastDot) {
+    norm = norm.replace(/\./g, '').replace(/,/g, '.');
+  } else if (lastDot > lastComma) {
+    norm = norm.replace(/,/g, '');
+  } else if (lastComma !== -1) {
+    norm = norm.replace(/,/g, '.');
+  }
+  
+  let num = parseFloat(norm);
+  if (isNaN(num)) return 0;
+  return isNegative ? -Math.abs(num) : num;
+};
+
+export const parseExcelDate = (val: any): string => {
+  if (!val) return new Date().toISOString().split('T')[0];
+  if (val instanceof Date) {
+    return val.toISOString().split('T')[0];
+  }
+  
+  const str = val.toString().trim();
+  
+  // Try YYYY-MM-DD or DD/MM/YYYY
+  const parts = str.split(/[-/]/);
+  if (parts.length === 3) {
+    if (parts[2].length === 4) {
+      // DD/MM/YYYY
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      return `${year}-${month}-${day}`;
+    } else if (parts[0].length === 4) {
+      // YYYY-MM-DD
+      const year = parts[0];
+      const month = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+  
+  const num = parseFloat(str);
+  if (!isNaN(num) && num > 20000 && num < 60000) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const dateMs = excelEpoch.getTime() + num * 24 * 60 * 60 * 1000;
+    return new Date(dateMs).toISOString().split('T')[0];
+  }
+  
+  try {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().split('T')[0];
+    }
+  } catch (e) {}
+  
+  return new Date().toISOString().split('T')[0];
+};
+
+export const parseExcelKas = (arrayBuffer: ArrayBuffer): Promise<ParsedKasEntry[]> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const data = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+
+      // Find the Laporan Kas sheet: look for sheet containing 'KESELURUHAN'
+      const sheetName = workbook.SheetNames.find(name => 
+        name && name.toUpperCase().includes('KESELURUHAN')
+      ) || workbook.SheetNames[0];
+
+      if (!sheetName) {
+        throw new Error('Tidak ada sheet yang ditemukan di file Excel.');
+      }
+
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+
+      // Find header row (it should contain Tanggal and Keterangan)
+      let headerRowIndex = -1;
+      for (let r = 0; r < Math.min(rows.length, 20); r++) {
+        const row = rows[r];
+        if (row && Array.isArray(row)) {
+          const rowStr = Array.from(row).map(cell => (cell !== undefined && cell !== null ? cell.toString().toUpperCase() : ''));
+          const hasTanggal = rowStr.some(cell => cell && cell.includes('TANGGAL'));
+          const hasKeterangan = rowStr.some(cell => cell && cell.includes('KETERANGAN'));
+          if (hasTanggal && hasKeterangan) {
+            headerRowIndex = r;
+            break;
+          }
+        }
+      }
+
+      if (headerRowIndex === -1) {
+        throw new Error('Format Excel tidak valid. Baris header dengan kolom "Tanggal" dan "Keterangan" tidak ditemukan.');
+      }
+
+      const rawHeaders = Array.from(rows[headerRowIndex] || []);
+      const headers = rawHeaders.map(h => (h !== undefined && h !== null ? h.toString().trim() : ''));
+
+      const getColIndex = (searchTerms: string[]) => {
+        return headers.findIndex(h => 
+          h && searchTerms.some(term => h.toUpperCase().includes(term.toUpperCase()))
+        );
+      };
+
+      const tanggalIdx = getColIndex(['TANGGAL']);
+      const keteranganIdx = getColIndex(['KETERANGAN']);
+      const masukIdx = getColIndex(['UANG MASUK', 'PEMASUKAN', 'MASUK', 'DEBIT', 'DEBET']);
+      const keluarIdx = getColIndex(['UANG KELUAR', 'PENGELUARAN', 'KELUAR', 'KREDIT']);
+      const saldoIdx = getColIndex(['SALDO AKHIR', 'SALDO']);
+      const buktiIdx = getColIndex(['BUKTI TRANSFER', 'BUKTI']);
+      const catatanIdx = getColIndex(['CATATAN', 'KETERANGAN LAIN']);
+
+      if (tanggalIdx === -1 || keteranganIdx === -1) {
+        throw new Error('Kolom penting (Tanggal atau Keterangan) tidak ditemukan di baris header.');
+      }
+
+      const results: ParsedKasEntry[] = [];
+
+      for (let r = headerRowIndex + 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || !Array.isArray(row) || row.length === 0) continue;
+
+        const tanggalVal = row[tanggalIdx];
+        const keteranganVal = row[keteranganIdx];
+
+        // Skip rows that don't have keterangan or date
+        if (!keteranganVal || !tanggalVal) continue;
+        const ketStr = keteranganVal.toString().trim();
+        if (!ketStr || ketStr.toUpperCase().includes('TOTAL') || ketStr.toUpperCase().includes('GRAND') || ketStr.toUpperCase() === 'NO') {
+          continue;
+        }
+
+        const dateStr = parseExcelDate(tanggalVal);
+        const masukVal = masukIdx !== -1 ? parseIndonesianCurrency(row[masukIdx]) : 0;
+        const keluarVal = keluarIdx !== -1 ? parseIndonesianCurrency(row[keluarIdx]) : 0;
+        const saldoVal = saldoIdx !== -1 ? parseIndonesianCurrency(row[saldoIdx]) : 0;
+        const buktiStr = (buktiIdx !== -1 && row[buktiIdx] !== undefined && row[buktiIdx] !== null) ? row[buktiIdx].toString().trim() : '';
+        const catatanStr = (catatanIdx !== -1 && row[catatanIdx] !== undefined && row[catatanIdx] !== null) ? row[catatanIdx].toString().trim() : '';
+
+        results.push({
+          tanggal: dateStr,
+          keterangan: ketStr,
+          uang_masuk: masukVal,
+          uang_keluar: keluarVal,
+          saldo_akhir: saldoVal,
+          bukti_transfer: buktiStr,
+          catatan: catatanStr
+        });
+      }
+
+      resolve(results);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+

@@ -242,7 +242,22 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
             <div className="slip-meta-row">
               <div className="slip-meta-label">Status Bayar</div>
               <div className="slip-meta-colon">:</div>
-              <div className="slip-meta-value" style={{ color: '#10b981' }}>TRANSFER</div>
+              <div className="slip-meta-value" style={{ 
+                color: (data.no_rek && 
+                        data.no_rek.trim() !== '' && 
+                        data.no_rek.trim() !== '-' && 
+                        data.no_rek.trim() !== '0' && 
+                        data.no_rek.trim().toLowerCase() !== 'cash' && 
+                        data.no_rek.trim().toLowerCase() !== 'tunai') ? '#10b981' : '#f59e0b',
+                fontWeight: 600
+              }}>
+                {(data.no_rek && 
+                  data.no_rek.trim() !== '' && 
+                  data.no_rek.trim() !== '-' && 
+                  data.no_rek.trim() !== '0' && 
+                  data.no_rek.trim().toLowerCase() !== 'cash' && 
+                  data.no_rek.trim().toLowerCase() !== 'tunai') ? 'Transfer' : 'Cash / Tunai'}
+              </div>
             </div>
           </div>
         </div>

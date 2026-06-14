@@ -4,6 +4,7 @@ import { parseExcelPayroll } from '../utils/excelParser';
 import { EmployeeTable } from './EmployeeTable';
 import { SlipGaji, formatRupiah } from './SlipGaji';
 import type { SlipData } from './SlipGaji';
+import { BukuKas } from './BukuKas';
 import { generateWhatsAppMessage, getWhatsAppWebLink } from '../utils/waHelper';
 import { 
   Upload, LogOut, Users, Banknote, Landmark, RefreshCw, Printer, Calendar, Trash2
@@ -16,6 +17,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) => {
+  const [activeTab, setActiveTab] = useState<'payroll' | 'kas'>('payroll');
   const [slips, setSlips] = useState<SlipData[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -375,243 +377,239 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         </button>
       </div>
 
-      {/* Upload & Stat Grid */}
-      <div className="no-print grid-two-cols" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2rem'
-      }}>
-        {/* Upload Zone */}
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.125rem', color: '#1e3a8a', marginBottom: '1rem' }}>
-            Import Data Penggajian Bulan Baru
-          </h3>
-          <div 
-            className={`upload-zone ${dragActive ? 'dragging' : ''}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={triggerFileInput}
-          >
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              style={{ display: 'none' }} 
-              onChange={handleFileChange}
-              accept=".xlsx, .xls"
-            />
-            <Upload size={32} className="upload-icon" style={{ margin: '0 auto 1rem' }} />
-            <p style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.25rem' }}>
-              Drag & Drop file Excel di sini
-            </p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-              atau klik untuk mencari file (.xlsx atau .xls)
-            </p>
-          </div>
-        </div>
+      {/* Navigation Tabs - Hidden during print */}
+      <div className="admin-tabs no-print">
+        <button 
+          className={`tab-btn ${activeTab === 'payroll' ? 'active' : ''}`}
+          onClick={() => setActiveTab('payroll')}
+        >
+          <Users size={16} />
+          Management Gaji Karyawan
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'kas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('kas')}
+        >
+          <Landmark size={16} />
+          Buku Kas Perusahaan
+        </button>
+      </div>
 
-        {/* Info & Status Box */}
-        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div>
-            <h3 style={{ fontSize: '1.125rem', color: '#1e3a8a', marginBottom: '0.75rem' }}>
-              Status Sistem & Database
-            </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-              <span className={`badge ${isSupabaseConfigured ? 'badge-success' : 'badge-warning'}`}>
-                {isSupabaseConfigured ? 'Supabase Terkoneksi' : 'Penyimpanan Lokal'}
-              </span>
-              <button 
-                className="btn btn-outline btn-sm" 
-                onClick={loadSlips} 
-                disabled={loading || syncing} 
-                style={{ padding: '0.25rem 0.5rem' }}
-                title="Reload data"
+      {activeTab === 'payroll' ? (
+        <>
+          {/* Upload & Stat Grid */}
+          <div className="no-print grid-two-cols" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '2rem'
+          }}>
+            {/* Upload Zone */}
+            <div className="glass-card" style={{ padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', color: '#1e3a8a', marginBottom: '1rem' }}>
+                Import Data Penggajian Bulan Baru
+              </h3>
+              <div 
+                className={`upload-zone ${dragActive ? 'dragging' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={triggerFileInput}
               >
-                <RefreshCw size={12} className={loading ? 'spin-effect' : ''} />
-              </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileChange}
+                  accept=".xlsx, .xls"
+                />
+                <Upload size={32} className="upload-icon" style={{ margin: '0 auto 1rem' }} />
+                <p style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.25rem' }}>
+                  Drag & Drop file Excel di sini
+                </p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                  atau klik untuk mencari file (.xlsx atau .xls)
+                </p>
+              </div>
+            </div>
+
+            {/* Info & Status Box */}
+            <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.125rem', color: '#1e3a8a', marginBottom: '0.75rem' }}>
+                  Status Sistem & Database
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                  <span className={`badge ${isSupabaseConfigured ? 'badge-success' : 'badge-warning'}`}>
+                    {isSupabaseConfigured ? 'Supabase Terkoneksi' : 'Penyimpanan Lokal'}
+                  </span>
+                  <button 
+                    className="btn btn-outline btn-sm" 
+                    onClick={loadSlips} 
+                    disabled={loading || syncing} 
+                    style={{ padding: '0.25rem 0.5rem' }}
+                    title="Reload data"
+                  >
+                    <RefreshCw size={12} className={loading ? 'spin-effect' : ''} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Kelola Data Bulanan (List Month & Hapus) */}
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                <h4 style={{ fontSize: '0.9375rem', color: '#1e3a8a', marginBottom: '0.75rem', fontWeight: 600 }}>
+                  Kelola Data Bulanan
+                </h4>
+                {months.filter(m => m !== 'ALL').length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontStyle: 'italic' }}>
+                    Belum ada data bulanan. Silakan import file Excel.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '140px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {months.filter(m => m !== 'ALL').map(month => {
+                      const count = slips.filter(s => s.bulan === month).length;
+                      return (
+                        <div key={month} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.5rem 0.75rem',
+                          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-color)',
+                          fontSize: '0.8125rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{month}</span>
+                            <span className="badge badge-info" style={{ fontSize: '0.6875rem', padding: '0.125rem 0.375rem' }}>
+                              {count} Slip
+                            </span>
+                          </div>
+                          <button
+                            className="btn btn-danger btn-sm btn-icon"
+                            onClick={() => handleDeleteMonth(month)}
+                            disabled={syncing}
+                            title={`Hapus semua data bulan ${month}`}
+                            style={{ padding: '0.25rem', borderRadius: '4px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Status Toast */}
+              {statusMessage && (
+                <div style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.8125rem',
+                  backgroundColor: statusMessage.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : statusMessage.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(37, 99, 235, 0.1)',
+                  color: statusMessage.type === 'error' ? 'var(--error)' : statusMessage.type === 'success' ? 'var(--success)' : 'var(--primary)',
+                  border: `1px solid ${statusMessage.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : statusMessage.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(37, 99, 235, 0.2)'}`,
+                  marginTop: 'auto'
+                }}>
+                  {statusMessage.text}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Kelola Data Bulanan (List Month & Hapus) */}
-          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <h4 style={{ fontSize: '0.9375rem', color: '#1e3a8a', marginBottom: '0.75rem', fontWeight: 600 }}>
-              Kelola Data Bulanan
-            </h4>
-            {months.filter(m => m !== 'ALL').length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontStyle: 'italic' }}>
-                Belum ada data bulanan. Silakan import file Excel.
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '140px', overflowY: 'auto', paddingRight: '4px' }}>
-                {months.filter(m => m !== 'ALL').map(month => {
-                  const count = slips.filter(s => s.bulan === month).length;
-                  return (
-                    <div key={month} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.5rem 0.75rem',
-                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-color)',
-                      fontSize: '0.8125rem'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{month}</span>
-                        <span className="badge badge-info" style={{ fontSize: '0.6875rem', padding: '0.125rem 0.375rem' }}>
-                          {count} Slip
-                        </span>
-                      </div>
-                      <button
-                        className="btn btn-danger btn-sm btn-icon"
-                        onClick={() => handleDeleteMonth(month)}
-                        disabled={syncing}
-                        title={`Hapus semua data bulan ${month}`}
-                        style={{ padding: '0.25rem', borderRadius: '4px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  );
-                })}
+          {/* Month Filter & Print Panel */}
+          <div className="glass-card no-print filter-print-panel">
+            <div className="filter-section">
+              <div className="filter-icon-wrapper">
+                <Calendar size={20} />
+              </div>
+              <div className="filter-select-wrapper">
+                <label className="form-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '2px', display: 'block' }}>
+                  Periode Penggajian (Bulan)
+                </label>
+                <select 
+                  className="filter-select filter-select-element"
+                  value={selectedBulan}
+                  onChange={(e) => setSelectedBulan(e.target.value)}
+                >
+                  {months.map(m => (
+                    <option key={m} value={m}>{m === 'ALL' ? 'Semua Periode / Bulan' : m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {filteredForStats.length > 0 && (
+              <div className="actions-section">
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                  Menampilkan <strong>{filteredForStats.length}</strong> data slip gaji
+                </span>
+                <button 
+                  className="btn btn-primary print-all-btn" 
+                  onClick={handlePrintAll}
+                >
+                  <Printer size={18} />
+                  Cetak Semua Slip ({selectedBulan === 'ALL' ? 'Semua Bulan' : selectedBulan})
+                </button>
               </div>
             )}
           </div>
 
-          {/* Status Toast */}
-          {statusMessage && (
-            <div style={{
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.8125rem',
-              backgroundColor: statusMessage.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : statusMessage.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(37, 99, 235, 0.1)',
-              color: statusMessage.type === 'error' ? 'var(--error)' : statusMessage.type === 'success' ? 'var(--success)' : 'var(--primary)',
-              border: `1px solid ${statusMessage.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : statusMessage.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(37, 99, 235, 0.2)'}`,
-              marginTop: 'auto'
-            }}>
-              {statusMessage.text}
-            </div>
-          )}
-        </div>
-      </div>
+          {/* Summary Widgets */}
+          <div className="no-print">
+            <div className="stats-grid">
+              <div className="glass-card stat-card">
+                <div className="stat-icon stat-icon-blue">
+                  <Users size={24} />
+                </div>
+                <div className="stat-info">
+                  <span className="stat-label">Total Karyawan</span>
+                  <span className="stat-value">{totalEmployees} Karyawan</span>
+                </div>
+              </div>
 
-      {/* Month Filter & Print Panel */}
-      <div className="glass-card no-print filter-print-panel" style={{ 
-        padding: '1.25rem 1.5rem', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        flexWrap: 'wrap', 
-        gap: '1rem',
-        borderLeft: '4px solid var(--primary)',
-        marginTop: '1rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '280px' }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            borderRadius: 'var(--radius-sm)', 
-            backgroundColor: 'var(--primary-glow)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            color: 'var(--primary)',
-            flexShrink: 0
-          }}>
-            <Calendar size={20} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label className="form-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '2px', display: 'block' }}>
-              Periode Penggajian (Bulan)
-            </label>
-            <select 
-              className="filter-select"
-              value={selectedBulan}
-              onChange={(e) => setSelectedBulan(e.target.value)}
-              style={{ width: '100%', maxWidth: '320px', border: '1px solid var(--border-color)', fontWeight: 500, marginTop: '0.25rem' }}
-            >
-              {months.map(m => (
-                <option key={m} value={m}>{m === 'ALL' ? 'Semua Periode / Bulan' : m}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+              <div className="glass-card stat-card">
+                <div className="stat-icon stat-icon-emerald">
+                  <Banknote size={24} />
+                </div>
+                <div className="stat-info">
+                  <span className="stat-label">Total Gaji Dibayarkan</span>
+                  <span className="stat-value">{formatRupiah(totalSalary)}</span>
+                </div>
+              </div>
 
-        {filteredForStats.length > 0 && (
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              Menampilkan <strong>{filteredForStats.length}</strong> data slip gaji
-            </span>
-            <button 
-              className="btn btn-primary" 
-              onClick={handlePrintAll}
-              style={{ 
-                padding: '0.75rem 1.5rem', 
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: 600
-              }}
-            >
-              <Printer size={18} />
-              Cetak Semua Slip ({selectedBulan === 'ALL' ? 'Semua Bulan' : selectedBulan})
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Summary Widgets */}
-      <div className="no-print">
-        <div className="stats-grid">
-          <div className="glass-card stat-card">
-            <div className="stat-icon stat-icon-blue">
-              <Users size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-label">Total Karyawan</span>
-              <span className="stat-value">{totalEmployees} Karyawan</span>
+              <div className="glass-card stat-card">
+                <div className="stat-icon stat-icon-teal">
+                  <Landmark size={24} />
+                </div>
+                <div className="stat-info">
+                  <span className="stat-label">Rata-rata Gaji</span>
+                  <span className="stat-value">{formatRupiah(avgSalary)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="glass-card stat-card">
-            <div className="stat-icon stat-icon-emerald">
-              <Banknote size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-label">Total Gaji Dibayarkan</span>
-              <span className="stat-value">{formatRupiah(totalSalary)}</span>
-            </div>
+          {/* Main Table View */}
+          <div className="no-print">
+            {loading ? (
+              <div className="glass-card text-center" style={{ padding: '4rem 1rem' }}>
+                <p style={{ color: 'var(--text-muted)' }}>Memuat data karyawan...</p>
+              </div>
+            ) : (
+              <EmployeeTable 
+                slips={filteredForStats} 
+                onPreview={setPreviewSlip} 
+                onSendWA={handleSendWA}
+                generatingWAId={generatingWAId}
+              />
+            )}
           </div>
-
-          <div className="glass-card stat-card">
-            <div className="stat-icon stat-icon-teal">
-              <Landmark size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-label">Rata-rata Gaji</span>
-              <span className="stat-value">{formatRupiah(avgSalary)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table View */}
-      <div className="no-print">
-        {loading ? (
-          <div className="glass-card text-center" style={{ padding: '4rem 1rem' }}>
-            <p style={{ color: 'var(--text-muted)' }}>Memuat data karyawan...</p>
-          </div>
-        ) : (
-          <EmployeeTable 
-            slips={filteredForStats} 
-            onPreview={setPreviewSlip} 
-            onSendWA={handleSendWA}
-            generatingWAId={generatingWAId}
-          />
-        )}
-      </div>
+        </>
+      ) : (
+        <BukuKas adminEmail={adminEmail} />
+      )}
 
       {/* Hidden container for rendering WA images in background */}
       {renderingSlip && (
