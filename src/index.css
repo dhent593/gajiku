@@ -852,6 +852,9 @@ a:hover {
   .filter-print-panel .filter-section {
     min-width: 0 !important;
     width: 100%;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.75rem;
   }
   .filter-print-panel .filter-select-element {
     max-width: 100% !important;

@@ -24,6 +24,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
   const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('ALL');
+  const [sortBy, setSortBy] = useState('excel-asc');
   
   // Modal states
   const [showFormModal, setShowFormModal] = useState(false);
@@ -343,6 +344,43 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
     }
   };
 
+  const handleDeleteAllEntries = async () => {
+    const confirm1 = window.confirm(
+      "PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH data transaksi kas?\nTindakan ini akan mengosongkan seluruh buku kas dan tidak dapat dibatalkan."
+    );
+    if (!confirm1) return;
+
+    const confirm2 = window.confirm(
+      "KONFIRMASI TERAKHIR: Anda benar-benar yakin ingin menghapus semua data transaksi kas?"
+    );
+    if (!confirm2) return;
+
+    setSyncing(true);
+    showStatus('info', 'Sedang menghapus semua data transaksi kas...');
+
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('kas_entries')
+          .delete()
+          .not('id', 'is', null);
+
+        if (error) throw error;
+        showStatus('success', 'Berhasil menghapus seluruh data buku kas dari database Supabase.');
+      } else {
+        localStorage.removeItem('gajiku_local_kas');
+        showStatus('success', '[Offline Demo] Berhasil mengosongkan seluruh data kas dari penyimpanan lokal.');
+      }
+
+      await loadEntries();
+    } catch (err: any) {
+      console.error(err);
+      showStatus('error', 'Gagal mengosongkan data kas: ' + err.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // Excel Export handler
   const handleExportExcel = () => {
     if (filteredEntries.length === 0) {
@@ -425,14 +463,17 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
     return false;
   });
 
-  // Calculate dynamic statistics based on loaded/filtered list
-  // Note: For running balance to be mathematically correct in the UI,
-  // we compute a running sum from the beginning of the list, 
-  // but let's base it on the filtered view or total list.
-  // Actually, calculating running sums based on chronological order of ALL entries is the most mathematically correct.
-  // Let's compute running balances chronologically for ALL entries.
+  // Sort ALL entries chronologically first for running balance calculation to be mathematically correct!
+  const sortedChronologically = [...entries].sort((a, b) => {
+    const dateCompare = a.tanggal.localeCompare(b.tanggal);
+    if (dateCompare !== 0) return dateCompare;
+    const urutA = a.urut !== undefined ? a.urut : 0;
+    const urutB = b.urut !== undefined ? b.urut : 0;
+    return urutA - urutB;
+  });
+
   let runningBalance = 0;
-  const entriesWithRunningBalance = entries.map(item => {
+  const entriesWithRunningBalance = sortedChronologically.map(item => {
     runningBalance = runningBalance + item.uang_masuk - item.uang_keluar;
     return {
       ...item,
@@ -461,8 +502,43 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
     return false;
   });
 
-  const totalIn = filteredEntries.reduce((sum, e) => sum + e.uang_masuk, 0);
-  const totalOut = filteredEntries.reduce((sum, e) => sum + e.uang_keluar, 0);
+  // Sort display entries based on user selection
+  const sortedDisplayEntries = [...displayEntries].sort((a, b) => {
+    if (sortBy === 'excel-asc') {
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutA - urutB;
+    }
+    if (sortBy === 'excel-desc') {
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutB - urutA;
+    }
+    if (sortBy === 'date-desc') {
+      const dateCompare = b.tanggal.localeCompare(a.tanggal);
+      if (dateCompare !== 0) return dateCompare;
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutB - urutA;
+    }
+    if (sortBy === 'date-asc') {
+      const dateCompare = a.tanggal.localeCompare(a.tanggal);
+      if (dateCompare !== 0) return dateCompare;
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutA - urutB;
+    }
+    if (sortBy === 'masuk-desc') {
+      return b.uang_masuk - a.uang_masuk;
+    }
+    if (sortBy === 'keluar-desc') {
+      return b.uang_keluar - a.uang_keluar;
+    }
+    return 0;
+  });
+
+  const totalIn = displayEntries.reduce((sum, e) => sum + e.uang_masuk, 0);
+  const totalOut = displayEntries.reduce((sum, e) => sum + e.uang_keluar, 0);
   // Current overall balance is the last balance of the chronological list
   const currentTotalBalance = entriesWithRunningBalance.length > 0 
     ? entriesWithRunningBalance[entriesWithRunningBalance.length - 1].saldo_akhir 
@@ -528,6 +604,43 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
             </div>
           </div>
 
+          {/* Kelola Data Kas (Hapus Semua) */}
+          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+            <h4 style={{ fontSize: '0.9375rem', color: '#1e3a8a', marginBottom: '0.5rem', fontWeight: 600 }}>
+              Kelola Data Kas
+            </h4>
+            {entries.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontStyle: 'italic', margin: 0 }}>
+                Belum ada data kas terdaftar.
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={handleDeleteAllEntries}
+                disabled={syncing}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  backgroundColor: 'var(--error)',
+                  color: 'white',
+                  width: '100%',
+                  justifyContent: 'center',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  borderRadius: 'var(--radius-md)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <Trash2 size={14} />
+                Kosongkan Seluruh Data Kas
+              </button>
+            )}
+          </div>
+
           {statusMessage && (
             <div style={{
               padding: '0.75rem 1rem',
@@ -580,10 +693,10 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
       </div>
 
       {/* Control Panel (Search, Filter, Manual Input, Export) */}
-      <div className="glass-card filter-print-panel" style={{ padding: '1.25rem 1.5rem' }}>
+      <div className="glass-card filter-print-panel">
         <div className="filter-section">
           {/* Search box */}
-          <div className="search-input-wrapper" style={{ flex: 1, minWidth: '220px' }}>
+          <div className="search-input-wrapper">
             <Search size={18} className="search-icon" />
             <input 
               type="text"
@@ -595,17 +708,32 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
           </div>
 
           {/* Month selector */}
-          <div className="filter-select-wrapper" style={{ flex: 1, minWidth: '180px' }}>
+          <div className="filter-select-wrapper">
             <select
               className="filter-select filter-select-element"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{ width: '100%' }}
             >
               <option value="ALL">Semua Periode / Bulan</option>
               {monthsAvailable.map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
+            </select>
+          </div>
+
+          {/* Sort selector */}
+          <div className="filter-select-wrapper">
+            <select
+              className="filter-select filter-select-element"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="excel-asc">Urutan Excel</option>
+              <option value="excel-desc">Urutan Excel (Terbalik)</option>
+              <option value="date-desc">Tanggal (Terbaru)</option>
+              <option value="date-asc">Tanggal (Terlama)</option>
+              <option value="masuk-desc">Uang Masuk (Terbesar)</option>
+              <option value="keluar-desc">Uang Keluar (Terbesar)</option>
             </select>
           </div>
         </div>
@@ -636,14 +764,14 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
       <div className="glass-card" style={{ padding: '1.5rem', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <h3 style={{ fontSize: '1.25rem', color: '#1e3a8a' }}>Log Aliran Buku Kas</h3>
-          <span className="badge badge-info">{displayEntries.length} Baris Transaksi</span>
+          <span className="badge badge-info">{sortedDisplayEntries.length} Baris Transaksi</span>
         </div>
 
         {loading ? (
           <div className="text-center" style={{ padding: '3rem 1rem', color: 'var(--text-muted)' }}>
             Memuat data catatan kas...
           </div>
-        ) : displayEntries.length === 0 ? (
+        ) : sortedDisplayEntries.length === 0 ? (
           <div className="text-center" style={{ padding: '3rem 1rem', color: 'var(--text-muted)' }}>
             Tidak ada transaksi kas ditemukan. Silakan upload file Excel atau tambah manual.
           </div>
@@ -664,7 +792,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
                 </tr>
               </thead>
               <tbody>
-                {displayEntries.map((item, index) => (
+                {sortedDisplayEntries.map((item, index) => (
                   <tr key={item.id || index}>
                     <td style={{ fontWeight: 600 }}>{index + 1}</td>
                     <td>{formatDateIndo(item.tanggal)}</td>
