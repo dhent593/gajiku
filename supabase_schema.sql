@@ -56,10 +56,11 @@ CREATE TABLE IF NOT EXISTS public.kas_entries (
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.kas_entries ENABLE ROW LEVEL SECURITY;
 
--- Policies for kas_entries (Authenticated admin only)
-CREATE POLICY "Allow authenticated select for kas" ON public.kas_entries
+-- Policies for kas_entries (Allow public read preview, authenticated write)
+DROP POLICY IF EXISTS "Allow authenticated select for kas" ON public.kas_entries;
+CREATE POLICY "Allow public select for kas" ON public.kas_entries
     FOR SELECT
-    TO authenticated
+    TO public
     USING (true);
 
 CREATE POLICY "Allow authenticated insert for kas" ON public.kas_entries

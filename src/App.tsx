@@ -5,7 +5,7 @@ import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 import { SlipGaji, formatRupiah } from './components/SlipGaji';
 import type { SlipData } from './components/SlipGaji';
-import { Landmark, ShieldAlert, Home, Calendar, Link as LinkIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { Landmark, ShieldAlert, Home, Calendar, Link as LinkIcon, TrendingUp, TrendingDown, Search } from 'lucide-react';
 
 // Public Slip View Page Component
 const PublicSlipPage: React.FC = () => {
@@ -127,6 +127,11 @@ const PublicKasPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Interactive filter, search, and sort states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(filterMonth);
+  const [sortBy, setSortBy] = useState('excel-asc');
+
   const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   useEffect(() => {
@@ -197,9 +202,38 @@ const PublicKasPage: React.FC = () => {
     return dateStr;
   };
 
-  // Filter entries based on the URL parameter 'month'
+  // Get unique months from the date list for filters
+  const getUniqueMonths = () => {
+    const monthsSet = new Set<string>();
+    entries.forEach(e => {
+      if (e.tanggal) {
+        const parts = e.tanggal.split('-');
+        if (parts.length === 3) {
+          const year = parts[0];
+          const monthNum = parseInt(parts[1], 10);
+          const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+          ];
+          monthsSet.add(`${monthNames[monthNum - 1]} ${year}`);
+        }
+      }
+    });
+    return Array.from(monthsSet);
+  };
+
+  const monthsAvailable = getUniqueMonths();
+
+  // Filter entries based on search term and selected month
   const filteredEntries = entries.filter(item => {
-    if (filterMonth === 'ALL') return true;
+    // 1. Search term check
+    const matchSearch = item.keterangan.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        (item.catatan && item.catatan.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (!matchSearch) return false;
+    if (selectedMonth === 'ALL') return true;
+
+    // selectedMonth is "MonthName Year"
     const parts = item.tanggal.split('-');
     if (parts.length === 3) {
       const year = parts[0];
@@ -209,9 +243,44 @@ const PublicKasPage: React.FC = () => {
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
       ];
       const entryMonthStr = `${monthNames[monthNum - 1]} ${year}`;
-      return entryMonthStr.toLowerCase() === filterMonth.toLowerCase();
+      return entryMonthStr.toLowerCase() === selectedMonth.toLowerCase();
     }
     return false;
+  });
+
+  // Sort display entries based on user selection
+  const sortedDisplayEntries = [...filteredEntries].sort((a, b) => {
+    if (sortBy === 'excel-asc') {
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutA - urutB;
+    }
+    if (sortBy === 'excel-desc') {
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutB - urutA;
+    }
+    if (sortBy === 'date-desc') {
+      const dateCompare = b.tanggal.localeCompare(a.tanggal);
+      if (dateCompare !== 0) return dateCompare;
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutB - urutA;
+    }
+    if (sortBy === 'date-asc') {
+      const dateCompare = a.tanggal.localeCompare(b.tanggal);
+      if (dateCompare !== 0) return dateCompare;
+      const urutA = a.urut !== undefined ? a.urut : 0;
+      const urutB = b.urut !== undefined ? b.urut : 0;
+      return urutA - urutB;
+    }
+    if (sortBy === 'masuk-desc') {
+      return b.uang_masuk - a.uang_masuk;
+    }
+    if (sortBy === 'keluar-desc') {
+      return b.uang_keluar - a.uang_keluar;
+    }
+    return 0;
   });
 
   const totalIn = filteredEntries.reduce((sum, e) => sum + e.uang_masuk, 0);
@@ -254,7 +323,7 @@ const PublicKasPage: React.FC = () => {
               <span className="badge badge-info" style={{ textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.5rem', marginBottom: '0.5rem', display: 'inline-block' }}>Laporan Arus Kas</span>
               <h2 style={{ color: '#1e3a8a', fontSize: '1.5rem', margin: 0 }}>PT. Senndyt Sarungtangan Kreatif</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                Periode Laporan: <strong>{filterMonth === 'ALL' ? 'Seluruh Tahun 2025/2026' : filterMonth}</strong>
+                Periode Laporan: <strong>{selectedMonth === 'ALL' ? 'Seluruh Tahun 2025/2026' : selectedMonth}</strong>
               </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -297,13 +366,63 @@ const PublicKasPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Filter Controls Row */}
+        <div className="glass-card" style={{ padding: '1rem 1.5rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Search box */}
+          <div className="search-input-wrapper" style={{ flex: '2 1 250px' }}>
+            <Search size={18} className="search-icon" />
+            <input 
+              type="text"
+              className="form-input"
+              placeholder="Cari keterangan / catatan kas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Month selector */}
+          <div className="filter-select-wrapper" style={{ flex: '1 1 150px' }}>
+            <select
+              className="filter-select"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <option value="ALL">Semua Periode / Bulan</option>
+              {monthsAvailable.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort selector */}
+          <div className="filter-select-wrapper" style={{ flex: '1 1 150px' }}>
+            <select
+              className="filter-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <option value="excel-asc">Urutan Excel</option>
+              <option value="excel-desc">Urutan Excel (Terbalik)</option>
+              <option value="date-desc">Tanggal (Terbaru)</option>
+              <option value="date-asc">Tanggal (Terlama)</option>
+              <option value="masuk-desc">Uang Masuk (Terbesar)</option>
+              <option value="keluar-desc">Uang Keluar (Terbesar)</option>
+            </select>
+          </div>
+        </div>
+
         {/* Ledger Table & Cards */}
         <div className="glass-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ fontSize: '1.125rem', color: '#1e3a8a', marginBottom: '1.25rem' }}>Rincian Aliran Buku Kas</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ fontSize: '1.125rem', color: '#1e3a8a', margin: 0 }}>Rincian Aliran Buku Kas</h3>
+            <span className="badge badge-info">{sortedDisplayEntries.length} Baris Transaksi</span>
+          </div>
           
-          {filteredEntries.length === 0 ? (
+          {sortedDisplayEntries.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
-              Tidak ada catatan transaksi kas untuk periode ini.
+              Tidak ada catatan transaksi kas untuk pencarian atau filter ini.
             </p>
           ) : (
             <>
@@ -323,7 +442,7 @@ const PublicKasPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredEntries.map((item, index) => (
+                    {sortedDisplayEntries.map((item, index) => (
                       <tr key={item.id || index}>
                         <td style={{ fontWeight: 600 }}>{index + 1}</td>
                         <td>{formatDateIndo(item.tanggal)}</td>
@@ -357,7 +476,7 @@ const PublicKasPage: React.FC = () => {
 
               {/* Mobile Card-Based List View */}
               <div className="kas-card-list">
-                {filteredEntries.map((item, index) => (
+                {sortedDisplayEntries.map((item, index) => (
                   <div key={item.id || index} className="kas-mobile-card">
                     <div className="kas-mobile-header">
                       <div className="kas-mobile-title">{item.keterangan}</div>
