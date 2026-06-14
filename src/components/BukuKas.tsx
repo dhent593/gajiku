@@ -473,7 +473,22 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
   });
 
   let runningBalance = 0;
-  const entriesWithRunningBalance = sortedChronologically.map(item => {
+
+  if (sortedChronologically.length > 0) {
+    const firstEntry = sortedChronologically[0];
+    if (firstEntry.uang_masuk === 0 && firstEntry.uang_keluar === 0 && firstEntry.saldo_akhir !== 0) {
+      runningBalance = firstEntry.saldo_akhir;
+    }
+  }
+
+  const entriesWithRunningBalance = sortedChronologically.map((item, index) => {
+    if (index === 0 && item.uang_masuk === 0 && item.uang_keluar === 0 && item.saldo_akhir !== 0) {
+      return {
+        ...item,
+        saldo_akhir: runningBalance
+      };
+    }
+    
     runningBalance = runningBalance + item.uang_masuk - item.uang_keluar;
     return {
       ...item,
