@@ -63,6 +63,16 @@ const PublicSlipPage: React.FC = () => {
     fetchSlip();
   }, [id]);
 
+  useEffect(() => {
+    if (loading) {
+      document.title = 'S-Fin - Slip Gaji';
+    } else if (error || !slip) {
+      document.title = 'S-Fin - Akses Ditolak';
+    } else {
+      document.title = `S-Fin - Slip Gaji ${slip.nama} - ${slip.bulan}`;
+    }
+  }, [loading, error, slip]);
+
   if (loading) {
     return (
       <div className="public-slip-layout">
@@ -192,6 +202,10 @@ const PublicKasPage: React.FC = () => {
 
     fetchKasData();
   }, []);
+
+  useEffect(() => {
+    document.title = `S-Fin - Laporan Buku Kas ${selectedMonth === 'ALL' ? 'Semua Periode' : selectedMonth}`;
+  }, [selectedMonth]);
 
   const formatDateIndo = (dateStr: string): string => {
     if (!dateStr) return '-';
@@ -538,11 +552,42 @@ const App: React.FC = () => {
     const checkUser = async () => {
       if (isSupabaseConfigured) {
         const { data: { session } } = await supabase.auth.getSession();
-        setAdminUser(session?.user?.email || null);
+        
+        if (session?.user?.email) {
+          const { data: allowedAdmin } = await supabase
+            .from('allowed_admins')
+            .select('email')
+            .eq('email', session.user.email.toLowerCase())
+            .maybeSingle();
+
+          if (!allowedAdmin) {
+            await supabase.auth.signOut();
+            setAdminUser(null);
+          } else {
+            setAdminUser(session.user.email);
+          }
+        } else {
+          setAdminUser(null);
+        }
         
         // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          setAdminUser(session?.user?.email || null);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          if (session?.user?.email) {
+            const { data: allowedAdmin } = await supabase
+              .from('allowed_admins')
+              .select('email')
+              .eq('email', session.user.email.toLowerCase())
+              .maybeSingle();
+
+            if (!allowedAdmin) {
+              await supabase.auth.signOut();
+              setAdminUser(null);
+            } else {
+              setAdminUser(session.user.email);
+            }
+          } else {
+            setAdminUser(null);
+          }
         });
 
         setLoading(false);

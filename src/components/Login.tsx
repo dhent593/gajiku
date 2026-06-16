@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { Lock, Mail, AlertCircle, LogIn } from 'lucide-react';
 
@@ -12,6 +12,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    document.title = 'S-Fin - Portal Login';
+  }, []);
 
   // Check if Supabase keys are configured
   const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -27,13 +31,25 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     if (!isSupabaseConfigured) {
       // Offline/Local Demo Mode Fallback
       setTimeout(() => {
-        if (
-          ((cleanEmail === 'admin@senndyt.com' || cleanEmail === 'admin') && (password === 'admin123' || password === 'palamana')) ||
-          ((cleanEmail === 'arif.setiawan2209@gmail.com' || cleanEmail === 'arif') && password === 'palamana')
-        ) {
-          onLoginSuccess(cleanEmail, rememberMe);
+        let admins = [];
+        const localAdmins = localStorage.getItem('sfin_local_admins');
+        if (localAdmins) {
+          admins = JSON.parse(localAdmins);
         } else {
-          setErrorMsg('Kredensial Demo salah. Periksa kembali email dan password Anda.');
+          admins = [
+            { email: 'admin@senndyt.com', role: 'superadmin' },
+            { email: 'arif.setiawan2209@gmail.com', role: 'superadmin' }
+          ];
+          localStorage.setItem('sfin_local_admins', JSON.stringify(admins));
+        }
+
+        const normalized = cleanEmail.includes('@') ? cleanEmail.toLowerCase() : `${cleanEmail}@senndyt.com`.toLowerCase();
+        const isAdminAllowed = admins.some((adm: any) => adm.email.toLowerCase() === normalized);
+
+        if (isAdminAllowed && (password === 'admin123' || password === 'palamana')) {
+          onLoginSuccess(normalized, rememberMe);
+        } else {
+          setErrorMsg('Kredensial Demo salah atau email Anda tidak terdaftar sebagai admin.');
         }
         setLoading(false);
       }, 800);
@@ -42,8 +58,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     try {
       // Standard Supabase Auth
+      const normalizedEmail = cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@senndyt.com`;
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@senndyt.com`, // support logging in with just "admin" -> "admin@senndyt.com"
+        email: normalizedEmail,
         password: password,
       });
 
@@ -52,7 +69,23 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
 
       if (data?.user) {
-        onLoginSuccess(data.user.email || cleanEmail, rememberMe);
+        const userEmail = data.user.email || normalizedEmail;
+        
+        // Whitelist check
+        const { data: allowedAdmin, error: checkError } = await supabase
+          .from('allowed_admins')
+          .select('email')
+          .eq('email', userEmail.toLowerCase())
+          .maybeSingle();
+
+        if (checkError || !allowedAdmin) {
+          await supabase.auth.signOut();
+          setErrorMsg('Akses Ditolak: Email Anda tidak terdaftar sebagai admin.');
+          setLoading(false);
+          return;
+        }
+
+        onLoginSuccess(userEmail, rememberMe);
       }
     } catch (err: any) {
       console.error(err);

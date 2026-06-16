@@ -78,3 +78,84 @@ CREATE POLICY "Allow authenticated delete for kas" ON public.kas_entries
     FOR DELETE
     TO authenticated
     USING (true);
+
+-- Create invoice_entries table
+CREATE TABLE IF NOT EXISTS public.invoice_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    no INT,
+    keterangan TEXT[] NOT NULL,
+    no_inv TEXT,
+    tanggal DATE,
+    dpp_amount NUMERIC DEFAULT 0,
+    no_bukti_potong TEXT,
+    tanggal_bukti DATE,
+    pph_amount NUMERIC DEFAULT 0,
+    net_received NUMERIC DEFAULT 0,
+    potongan_reject NUMERIC DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.invoice_entries ENABLE ROW LEVEL SECURITY;
+
+-- Policies for invoice_entries
+CREATE POLICY "Allow public select for invoices" ON public.invoice_entries
+    FOR SELECT
+    TO public
+    USING (true);
+
+CREATE POLICY "Allow authenticated insert for invoices" ON public.invoice_entries
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update for invoices" ON public.invoice_entries
+    FOR UPDATE
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated delete for invoices" ON public.invoice_entries
+    FOR DELETE
+    TO authenticated
+    USING (true);
+
+-- Create allowed_admins table
+CREATE TABLE IF NOT EXISTS public.allowed_admins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    role TEXT DEFAULT 'admin',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.allowed_admins ENABLE ROW LEVEL SECURITY;
+
+-- Policies for allowed_admins
+CREATE POLICY "Allow public read allowed_admins" ON public.allowed_admins
+    FOR SELECT
+    TO public
+    USING (true);
+
+CREATE POLICY "Allow authenticated insert for allowed_admins" ON public.allowed_admins
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update for allowed_admins" ON public.allowed_admins
+    FOR UPDATE
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated delete for allowed_admins" ON public.allowed_admins
+    FOR DELETE
+    TO authenticated
+    USING (true);
+
+-- Insert initial super admins
+INSERT INTO public.allowed_admins (email, role)
+VALUES 
+    ('admin@senndyt.com', 'superadmin'),
+    ('arif.setiawan2209@gmail.com', 'superadmin')
+ON CONFLICT (email) DO NOTHING;

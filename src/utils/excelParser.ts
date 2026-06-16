@@ -375,3 +375,104 @@ export const parseExcelKas = (arrayBuffer: ArrayBuffer): Promise<ParsedKasEntry[
   });
 };
 
+export interface ParsedInvoiceEntry {
+  no: number;
+  keterangan: string[];
+  no_inv: string;
+  tanggal: string | null;
+  dpp_amount: number;
+  no_bukti_potong: string;
+  tanggal_bukti: string | null;
+  pph_amount: number;
+  net_received: number;
+  potongan_reject: number;
+}
+
+export const parseExcelInvoice = (arrayBuffer: ArrayBuffer): Promise<ParsedInvoiceEntry[]> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const data = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+
+      const sheetName = workbook.SheetNames.find(name => 
+        name && (name.toUpperCase().includes('INV') || name.toUpperCase().includes('PENJUALAN'))
+      ) || workbook.SheetNames[0];
+
+      if (!sheetName) {
+        throw new Error('Tidak ada sheet invoice yang ditemukan.');
+      }
+
+      const sheet = workbook.Sheets[sheetName];
+      const ref = sheet['!ref'];
+      if (!ref) {
+        throw new Error('Range sheet kosong.');
+      }
+      
+      const range = XLSX.utils.decode_range(ref);
+      const results: ParsedInvoiceEntry[] = [];
+      let currentInvoice: ParsedInvoiceEntry | null = null;
+
+      // Start parsing from row 7 (index 6) to the end of range
+      for (let r = 6; r <= range.e.r; r++) {
+        const noCell = sheet[XLSX.utils.encode_cell({ r, c: 1 })]; // Col B (1)
+        const ketCell = sheet[XLSX.utils.encode_cell({ r, c: 2 })]; // Col C (2)
+        const invCell = sheet[XLSX.utils.encode_cell({ r, c: 3 })]; // Col D (3)
+        const dateCell = sheet[XLSX.utils.encode_cell({ r, c: 4 })]; // Col E (4)
+        const dppCell = sheet[XLSX.utils.encode_cell({ r, c: 5 })]; // Col F (5)
+        const bpCell = sheet[XLSX.utils.encode_cell({ r, c: 6 })]; // Col G (6)
+        const bpDateCell = sheet[XLSX.utils.encode_cell({ r, c: 7 })]; // Col H (7)
+        const pphCell = sheet[XLSX.utils.encode_cell({ r, c: 8 })]; // Col I (8)
+        const netCell = sheet[XLSX.utils.encode_cell({ r, c: 9 })]; // Col J (9)
+        const rejectCell = sheet[XLSX.utils.encode_cell({ r, c: 10 })]; // Col K (10)
+
+        const no = noCell ? noCell.v : null;
+        const keterangan = ketCell ? ketCell.v : null;
+        const no_inv = invCell ? invCell.v : null;
+        const tanggal_inv_serial = dateCell ? dateCell.v : null;
+        const dpp_amount = dppCell ? dppCell.v : null;
+        const no_bukti_potong = bpCell ? bpCell.v : null;
+        const tanggal_bukti_serial = bpDateCell ? bpDateCell.v : null;
+        const pph_amount = pphCell ? pphCell.v : null;
+        const net_received = netCell ? netCell.v : null;
+        const potongan_reject = rejectCell ? rejectCell.v : null;
+
+        // Skip totals or headers if they leak in
+        if (keterangan && String(keterangan).toUpperCase().includes('TOTAL')) {
+          continue;
+        }
+
+        // Check if we have a number/valid value in Col B (new invoice entry)
+        if (no !== null && (typeof no === 'number' || (!isNaN(Number(no)) && String(no).trim() !== ''))) {
+          if (currentInvoice) {
+            results.push(currentInvoice);
+          }
+
+          currentInvoice = {
+            no: Number(no),
+            keterangan: keterangan ? [String(keterangan).trim()] : [],
+            no_inv: no_inv ? String(no_inv).trim() : '',
+            tanggal: tanggal_inv_serial ? parseExcelDate(tanggal_inv_serial) : null,
+            dpp_amount: typeof dpp_amount === 'number' ? dpp_amount : parseIndonesianCurrency(dpp_amount),
+            no_bukti_potong: no_bukti_potong ? String(no_bukti_potong).trim() : '',
+            tanggal_bukti: tanggal_bukti_serial ? parseExcelDate(tanggal_bukti_serial) : null,
+            pph_amount: typeof pph_amount === 'number' ? pph_amount : parseIndonesianCurrency(pph_amount),
+            net_received: typeof net_received === 'number' ? net_received : parseIndonesianCurrency(net_received),
+            potongan_reject: typeof potongan_reject === 'number' ? potongan_reject : parseIndonesianCurrency(potongan_reject)
+          };
+        } else if (currentInvoice && keterangan !== null && String(keterangan).trim() !== '') {
+          // Append description line
+          currentInvoice.keterangan.push(String(keterangan).trim());
+        }
+      }
+
+      if (currentInvoice) {
+        results.push(currentInvoice);
+      }
+
+      resolve(results);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+

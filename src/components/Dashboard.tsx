@@ -5,9 +5,11 @@ import { EmployeeTable } from './EmployeeTable';
 import { SlipGaji, formatRupiah } from './SlipGaji';
 import type { SlipData } from './SlipGaji';
 import { BukuKas } from './BukuKas';
+import { InvoiceManager } from './InvoiceManager';
+import { AdminSettings } from './AdminSettings';
 import { generateWhatsAppMessage, getWhatsAppWebLink } from '../utils/waHelper';
 import { 
-  Upload, LogOut, Users, Banknote, Landmark, RefreshCw, Printer, Calendar, Trash2
+  Upload, LogOut, Users, Banknote, Landmark, RefreshCw, Printer, Calendar, Trash2, FileText, Shield
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
@@ -17,7 +19,27 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'payroll' | 'kas'>('payroll');
+  const [activeTab, setActiveTab] = useState<'payroll' | 'kas' | 'invoices' | 'admin'>('payroll');
+  
+  useEffect(() => {
+    switch (activeTab) {
+      case 'payroll':
+        document.title = 'S-Fin - Dashboard Management Gaji';
+        break;
+      case 'kas':
+        document.title = 'S-Fin - Buku Kas Perusahaan';
+        break;
+      case 'invoices':
+        document.title = 'S-Fin - Rekap Invoice Penjualan';
+        break;
+      case 'admin':
+        document.title = 'S-Fin - Manajemen User Admin';
+        break;
+      default:
+        document.title = 'S-Fin - Dashboard';
+    }
+  }, [activeTab]);
+
   const [slips, setSlips] = useState<SlipData[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -393,9 +415,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
           <Landmark size={16} />
           Buku Kas Perusahaan
         </button>
+        <button 
+          className={`tab-btn ${activeTab === 'invoices' ? 'active' : ''}`}
+          onClick={() => setActiveTab('invoices')}
+        >
+          <FileText size={16} />
+          Rekap Invoice Penjualan
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'admin' ? 'active' : ''}`}
+          onClick={() => setActiveTab('admin')}
+        >
+          <Shield size={16} />
+          Manajemen User Admin
+        </button>
       </div>
 
-      {activeTab === 'payroll' ? (
+      {activeTab === 'payroll' && (
         <>
           {/* Upload & Stat Grid */}
           <div className="no-print grid-two-cols" style={{
@@ -607,8 +643,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
             )}
           </div>
         </>
-      ) : (
+      )}
+
+      {activeTab === 'kas' && (
         <BukuKas adminEmail={adminEmail} />
+      )}
+
+      {activeTab === 'invoices' && (
+        <InvoiceManager adminEmail={adminEmail} />
+      )}
+
+      {activeTab === 'admin' && (
+        <AdminSettings currentAdminEmail={adminEmail} />
       )}
 
       {/* Hidden container for rendering WA images in background */}
