@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
-import { Plus, Trash2, Shield, User, Key, RefreshCw } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+import { Plus, Trash2, Shield, User, Key, RefreshCw, Lock } from 'lucide-react';
 
 interface AdminSettingsProps {
   currentAdminEmail: string;
@@ -11,6 +12,7 @@ interface AdminUser {
   email: string;
   role: string;
   created_at?: string;
+  password?: string;
 }
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({ currentAdminEmail }) => {
@@ -18,6 +20,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ currentAdminEmail 
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('admin');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -70,12 +73,18 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ currentAdminEmail 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = newEmail.trim().toLowerCase();
-    if (!cleanEmail) return;
+    const cleanPassword = newPassword.trim();
+    if (!cleanEmail || !cleanPassword) return;
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
       showStatus('error', 'Format email tidak valid.');
+      return;
+    }
+
+    if (cleanPassword.length < 6) {
+      showStatus('error', 'Password minimal harus 6 karakter.');
       return;
     }
 
@@ -88,25 +97,42 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ currentAdminEmail 
     setAdding(true);
     try {
       if (isSupabaseConfigured) {
+        // 1. Sign up the user in Supabase Auth using isolated temp client
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: { persistSession: false, autoRefreshToken: false }
+        });
+
+        const { error: authError } = await tempClient.auth.signUp({
+          email: cleanEmail,
+          password: cleanPassword
+        });
+
+        if (authError) throw authError;
+
+        // 2. Insert email and role into allowed_admins
         const { error } = await supabase
           .from('allowed_admins')
           .insert({ email: cleanEmail, role: newRole });
 
         if (error) throw error;
-        showStatus('success', `Berhasil menambahkan ${cleanEmail} ke daftar admin.`);
+        showStatus('success', `Berhasil mendaftarkan ${cleanEmail} ke Supabase Auth dan whitelist.`);
       } else {
         // Local storage write
         const newAdmin: AdminUser = {
           id: crypto.randomUUID(),
           email: cleanEmail,
-          role: newRole
+          role: newRole,
+          password: cleanPassword
         };
         const updated = [...admins, newAdmin];
         localStorage.setItem('sfin_local_admins', JSON.stringify(updated));
-        showStatus('success', `[Offline] Berhasil menambahkan ${cleanEmail} ke daftar admin.`);
+        showStatus('success', `[Offline] Berhasil mendaftarkan ${cleanEmail} dengan password.`);
       }
 
       setNewEmail('');
+      setNewPassword('');
       await loadAdmins();
     } catch (err: any) {
       console.error(err);
@@ -188,6 +214,28 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ currentAdminEmail 
                   placeholder="Contoh: hrd@senndyt.com"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                  style={{ paddingLeft: '2.75rem' }}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Password Admin Baru</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{
+                  position: 'absolute',
+                  left: '1rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)'
+                }} />
+                <input
+                  type="password"
+                  className="form-input"
+                  placeholder="Min. 6 karakter"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   style={{ paddingLeft: '2.75rem' }}
                   required
                 />

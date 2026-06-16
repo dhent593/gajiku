@@ -44,12 +44,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         }
 
         const normalized = cleanEmail.includes('@') ? cleanEmail.toLowerCase() : `${cleanEmail}@senndyt.com`.toLowerCase();
-        const isAdminAllowed = admins.some((adm: any) => adm.email.toLowerCase() === normalized);
+        const foundAdmin = admins.find((adm: any) => adm.email.toLowerCase() === normalized);
 
-        if (isAdminAllowed && (password === 'admin123' || password === 'palamana')) {
-          onLoginSuccess(normalized, rememberMe);
+        if (foundAdmin) {
+          const storedPassword = foundAdmin.password;
+          let isPasswordValid = false;
+          if (storedPassword) {
+            isPasswordValid = password === storedPassword;
+          } else {
+            isPasswordValid = password === 'palamana' || password === 'admin123';
+          }
+
+          if (isPasswordValid) {
+            onLoginSuccess(normalized, rememberMe);
+          } else {
+            setErrorMsg('Password yang Anda masukkan salah.');
+          }
         } else {
-          setErrorMsg('Kredensial Demo salah atau email Anda tidak terdaftar sebagai admin.');
+          setErrorMsg('Email Anda tidak terdaftar sebagai admin.');
         }
         setLoading(false);
       }, 800);
