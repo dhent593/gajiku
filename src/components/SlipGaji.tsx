@@ -70,7 +70,18 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
 
   // Helper to safely get nested detail numbers
   const getDetailNumber = (key: string): number => {
-    const val = data.details[key];
+    let val = data.details[key];
+    if (val === undefined || val === null) {
+      // Case-insensitive & space-insensitive fallback
+      const targetClean = key.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const foundKey = Object.keys(data.details).find(k => {
+        const kClean = k.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        return kClean === targetClean;
+      });
+      if (foundKey) {
+        val = data.details[foundKey];
+      }
+    }
     if (val === undefined || val === null) return 0;
     const parsed = typeof val === 'number' ? val : parseFloat(val.toString().replace(/[^0-9.-]+/g, ''));
     return isNaN(parsed) ? 0 : parsed;
@@ -98,8 +109,8 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
   const potonganLain = getDetailNumber('Potongan (Lain - lain)') || getDetailNumber('Potongan Lain-lain');
   const totalPotongan = potonganKehadiran + potonganLain;
 
-  // Lain-lain (THR)
-  const lainLainThr = getDetailNumber('Lain - Lain (THR)') || getDetailNumber('Lain-lain (THR)') || getDetailNumber('THR');
+  // Lain-lain (Tambahan / THR)
+  const lainLain = getDetailNumber('Lain - Lain') || getDetailNumber('Lain-lain') || getDetailNumber('Lain - Lain (THR)') || getDetailNumber('Lain-lain (THR)') || getDetailNumber('THR');
 
   // Trigger browser print
   const handlePrint = () => {
@@ -317,10 +328,10 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
                     <td className="slip-details-val">{formatRupiah(overTarget)}</td>
                   </tr>
                 )}
-                {lainLainThr > 0 && (
+                {lainLain > 0 && (
                   <tr>
-                    <td>Lain-Lain (THR / Bonus)</td>
-                    <td className="slip-details-val">{formatRupiah(lainLainThr)}</td>
+                    <td>Lain - Lain</td>
+                    <td className="slip-details-val">{formatRupiah(lainLain)}</td>
                   </tr>
                 )}
                 
@@ -334,7 +345,8 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
                     'Premi', 'Tunjangan', 'Total Lembur (jam)', 'Total Lembur', 'Upah Lembur /Jam', 
                     'Upah Lembur', 'Gaji Lembur', 'Upah Borongan', 'Borongan', 'Over Target', 
                     'Total Gaji B', 'Potongan Masuk (jam)', 'Potongan Masuk', 'Potongan', 
-                    'Potongan (Lain - lain)', 'Potongan Lain-lain', 'Lain - Lain (THR)', 'Lain-lain (THR)', 'THR'
+                    'Potongan (Lain - lain)', 'Potongan Lain-lain', 'Lain - Lain (THR)', 'Lain-lain (THR)', 
+                    'Lain - Lain', 'Lain-lain', 'THR'
                   ].some(term => key.toUpperCase().includes(term.toUpperCase()));
 
                   if (isMapped) return null;
@@ -349,7 +361,7 @@ export const SlipGaji: React.FC<SlipGajiProps> = ({ data, isPublicView = false }
 
                 <tr className="slip-total-row">
                   <td>Total Penerimaan (A)</td>
-                  <td className="slip-details-val">{formatRupiah(totalGajiB + (lainLainThr > 0 ? 0 : 0) /* Total Gaji B already summarizes the main earnings */)}</td>
+                  <td className="slip-details-val">{formatRupiah(totalGajiB + lainLain)}</td>
                 </tr>
               </tbody>
             </table>
