@@ -39,7 +39,7 @@ const PublicSlipPage: React.FC = () => {
           setSlip(data);
         } else {
           // Local offline fallback
-          const localData = localStorage.getItem('gajiku_local_slips');
+          const localData = localStorage.getItem('sfin_local_slips') || localStorage.getItem('gajiku_local_slips');
           if (localData) {
             const list = JSON.parse(localData) as SlipData[];
             const found = list.find(s => s.id === id || `demo-${s.nik}` === id);
@@ -149,7 +149,7 @@ const PublicKasPage: React.FC = () => {
           fetchedData = data || [];
         } else {
           // Local fallback
-          const localData = localStorage.getItem('gajiku_local_kas');
+          const localData = localStorage.getItem('sfin_local_kas') || localStorage.getItem('gajiku_local_kas');
           if (localData) {
             fetchedData = JSON.parse(localData);
           }
@@ -549,7 +549,10 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
       } else {
         // Fallback local session - check localStorage first, then sessionStorage
-        const localUser = localStorage.getItem('gajiku_local_session') || sessionStorage.getItem('gajiku_local_session');
+        const localUser = localStorage.getItem('sfin_local_session') || 
+                           localStorage.getItem('gajiku_local_session') || 
+                           sessionStorage.getItem('sfin_local_session') || 
+                           sessionStorage.getItem('gajiku_local_session');
         setAdminUser(localUser);
         setLoading(false);
       }
@@ -562,9 +565,9 @@ const App: React.FC = () => {
     setAdminUser(email);
     if (!isSupabaseConfigured) {
       if (rememberMe) {
-        localStorage.setItem('gajiku_local_session', email);
+        localStorage.setItem('sfin_local_session', email);
       } else {
-        sessionStorage.setItem('gajiku_local_session', email);
+        sessionStorage.setItem('sfin_local_session', email);
       }
     }
   };
@@ -573,7 +576,9 @@ const App: React.FC = () => {
     if (isSupabaseConfigured) {
       await supabase.auth.signOut();
     } else {
+      sessionStorage.removeItem('sfin_local_session');
       sessionStorage.removeItem('gajiku_local_session');
+      localStorage.removeItem('sfin_local_session');
       localStorage.removeItem('gajiku_local_session');
     }
     setAdminUser(null);

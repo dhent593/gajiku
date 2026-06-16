@@ -59,7 +59,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         setSlips(data || []);
       } else {
         // Fallback local storage
-        const localData = localStorage.getItem('gajiku_local_slips');
+        const localData = localStorage.getItem('sfin_local_slips') || localStorage.getItem('gajiku_local_slips');
         if (localData) {
           setSlips(JSON.parse(localData));
         } else {
@@ -224,7 +224,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         const remainingLocal = slips.filter(s => s.bulan !== importedMonth);
         const newLocal = [...remainingLocal, ...mockSlipsWithId];
         
-        localStorage.setItem('gajiku_local_slips', JSON.stringify(newLocal));
+        localStorage.setItem('sfin_local_slips', JSON.stringify(newLocal));
         showStatus('success', `[Offline Demo] Berhasil mengimpor ${mockSlipsWithId.length} data karyawan periode ${importedMonth} ke penyimpanan lokal.`);
       }
 
@@ -333,7 +333,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         showStatus('success', `Berhasil menghapus seluruh data gaji bulan ${month} dari database Supabase.`);
       } else {
         const remainingLocal = slips.filter(s => s.bulan !== month);
-        localStorage.setItem('gajiku_local_slips', JSON.stringify(remainingLocal));
+        localStorage.setItem('sfin_local_slips', JSON.stringify(remainingLocal));
         showStatus('success', `[Offline Demo] Berhasil menghapus data gaji bulan ${month} dari penyimpanan lokal.`);
       }
 
@@ -364,11 +364,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
       {/* Header Bar */}
       <div className="header-bar no-print">
         <div>
-          <h1 style={{ fontSize: '2.25rem', color: '#1e3a8a' }}>Gajiku Dashboard</h1>
+          <h1 style={{ fontSize: '2.25rem', color: '#1e3a8a' }}>S-Fin Dashboard</h1>
           <p style={{ color: 'var(--text-muted)' }}>PT. Senndyt Sarungtangan Kreatif — Admin: {adminEmail}</p>
         </div>
         <button className="btn btn-outline btn-sm" onClick={() => {
-          if (window.confirm('Apakah Anda yakin ingin keluar dari portal Gajiku?')) {
+          if (window.confirm('Apakah Anda yakin ingin keluar dari portal S-Fin?')) {
             onLogout();
           }
         }}>

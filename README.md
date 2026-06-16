@@ -1,6 +1,6 @@
-# Gajiku - Portal & Dashboard Penggajian Karyawan
+# S-Fin - Portal & Dashboard Penggajian Karyawan
 
-Gajiku adalah aplikasi web portal slip gaji dan dashboard penggajian untuk **PT. Senndyt Sarungtangan Kreatif**. Aplikasi ini dirancang untuk mempermudah HRD/Finance dalam mengelola data gaji bulanan, mencetak slip gaji massal secara rapi, mengirimkan slip gaji via WhatsApp, serta menyediakan halaman akses slip online resmi bagi karyawan.
+S-Fin adalah aplikasi web portal slip gaji dan dashboard penggajian untuk **PT. Senndyt Sarungtangan Kreatif**. Aplikasi ini dirancang untuk mempermudah HRD/Finance dalam mengelola data gaji bulanan, mencetak slip gaji massal secara rapi, mengirimkan slip gaji via WhatsApp, serta menyediakan halaman akses slip online resmi bagi karyawan.
 
 ---
 
@@ -65,8 +65,8 @@ Agar proses import berjalan dengan baik, pastikan file Excel penggajian memenuhi
 
 ### 1. Kloning Repositori
 ```bash
-git clone https://github.com/username-anda/gajiku.git
-cd gajiku
+git clone https://github.com/username-anda/s-fin.git
+cd s-fin
 ```
 
 ### 2. Instal Dependensi
@@ -98,4 +98,4 @@ npm run build
 
 ## 🌐 Penyebaran (Deployment)
 
-Aplikasi ini siap dideploy ke platform cloud modern seperti **Vercel** atau **Netlify**. Konfigurasi rute Vercel untuk Single Page Application (SPA) telah disiapkan di file [vercel.json](file:///d:/Project/gajiku/vercel.json).
+Aplikasi ini siap dideploy ke platform cloud modern seperti **Vercel** atau **Netlify**. Konfigurasi rute Vercel untuk Single Page Application (SPA) telah disiapkan di file [vercel.json](vercel.json).

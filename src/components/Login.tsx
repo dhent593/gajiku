@@ -78,7 +78,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         zIndex: 10
       }}>
         <div className="text-center" style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '2rem', color: '#1e3a8a', marginBottom: '0.5rem' }}>Gajiku Portal</h2>
+          <h2 style={{ fontSize: '2rem', color: '#1e3a8a', marginBottom: '0.5rem' }}>S-Fin Portal</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
             PT. Senndyt Sarungtangan Kreatif
           </p>

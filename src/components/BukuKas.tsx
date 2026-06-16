@@ -66,7 +66,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
         setEntries(data || []);
       } else {
         // Local fallback storage
-        const localData = localStorage.getItem('gajiku_local_kas');
+        const localData = localStorage.getItem('sfin_local_kas') || localStorage.getItem('gajiku_local_kas');
         if (localData) {
           setEntries(JSON.parse(localData));
         } else {
@@ -166,7 +166,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
           id: crypto.randomUUID(),
           urut: index
         }));
-        localStorage.setItem('gajiku_local_kas', JSON.stringify(mockEntriesWithId));
+        localStorage.setItem('sfin_local_kas', JSON.stringify(mockEntriesWithId));
         showStatus('success', `[Offline Demo] Berhasil mengimpor ${parsedEntries.length} data kas ke penyimpanan lokal.`);
       }
 
@@ -282,7 +282,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
             }
             return item;
           });
-          localStorage.setItem('gajiku_local_kas', JSON.stringify(updated));
+          localStorage.setItem('sfin_local_kas', JSON.stringify(updated));
           showStatus('success', 'Berhasil memperbarui transaksi kas (Offline).');
         } else {
           const nextUrut = entries.filter(e => e.tanggal === formTanggal).length;
@@ -298,7 +298,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
             urut: nextUrut
           };
           const updated = [...entries, newEntry];
-          localStorage.setItem('gajiku_local_kas', JSON.stringify(updated));
+          localStorage.setItem('sfin_local_kas', JSON.stringify(updated));
           showStatus('success', 'Berhasil menambahkan transaksi kas baru (Offline).');
         }
       }
@@ -331,7 +331,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
         showStatus('success', 'Transaksi kas berhasil dihapus.');
       } else {
         const remaining = entries.filter(item => item.id !== entry.id);
-        localStorage.setItem('gajiku_local_kas', JSON.stringify(remaining));
+        localStorage.setItem('sfin_local_kas', JSON.stringify(remaining));
         showStatus('success', 'Transaksi kas berhasil dihapus (Offline).');
       }
 
@@ -368,6 +368,7 @@ export const BukuKas: React.FC<BukuKasProps> = ({ adminEmail }) => {
         if (error) throw error;
         showStatus('success', 'Berhasil menghapus seluruh data buku kas dari database Supabase.');
       } else {
+        localStorage.removeItem('sfin_local_kas');
         localStorage.removeItem('gajiku_local_kas');
         showStatus('success', '[Offline Demo] Berhasil mengosongkan seluruh data kas dari penyimpanan lokal.');
       }
