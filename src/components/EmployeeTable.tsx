@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, MessageSquare, Link as LinkIcon, Check, Eye } from 'lucide-react';
+import { Search, MessageSquare, Link as LinkIcon, Check, Eye, Copy } from 'lucide-react';
 import { formatRupiah } from './SlipGaji';
 import type { SlipData } from './SlipGaji';
+import { generateWhatsAppMessage } from '../utils/waHelper';
 
 interface EmployeeTableProps {
   slips: SlipData[];
@@ -20,6 +21,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   const [selectedJabatan, setSelectedJabatan] = useState('ALL');
   const [sortBy, setSortBy] = useState('default');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedTextId, setCopiedTextId] = useState<string | null>(null);
 
   // Get unique list of Jabatan for the dropdown filter
   const jabatans = ['ALL', ...Array.from(new Set(slips.map(s => s.jabatan))).filter(Boolean)];
@@ -59,6 +61,17 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
     navigator.clipboard.writeText(publicUrl).then(() => {
       setCopiedId(slip.id!);
       setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const handleCopyTextMessage = (slip: SlipData) => {
+    const slipId = slip.id || `demo-${slip.nik}`;
+    const publicUrl = `${window.location.origin}/slip/${slipId}`;
+    const message = generateWhatsAppMessage(slip.nama, slip.bulan, publicUrl);
+    
+    navigator.clipboard.writeText(message).then(() => {
+      setCopiedTextId(slipId);
+      setTimeout(() => setCopiedTextId(null), 2000);
     });
   };
 
@@ -178,6 +191,16 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                         style={copiedId === slip.id ? { borderColor: 'var(--success)', color: 'var(--success)' } : {}}
                       >
                         {copiedId === slip.id ? <Check size={15} /> : <LinkIcon size={15} />}
+                      </button>
+
+                      {/* Copy Text WA Button */}
+                      <button 
+                        className="btn btn-outline btn-sm btn-icon" 
+                        onClick={() => handleCopyTextMessage(slip)}
+                        title="Salin Text & Link WA"
+                        style={copiedTextId === (slip.id || `demo-${slip.nik}`) ? { borderColor: 'var(--success)', color: 'var(--success)' } : {}}
+                      >
+                        {copiedTextId === (slip.id || `demo-${slip.nik}`) ? <Check size={15} /> : <Copy size={15} />}
                       </button>
 
                       {/* WhatsApp Button */}
