@@ -313,7 +313,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ adminEmail, onLogout }) =>
         ? `${window.location.origin}/slip/${slip.id}`
         : `${window.location.origin}/slip/demo-${slip.nik}`;
       
-      const waMsg = generateWhatsAppMessage(slip.nama, slip.bulan, publicUrl);
+      const waMsg = generateWhatsAppMessage(slip, publicUrl);
       const waLink = getWhatsAppWebLink(slip.no_wa, waMsg);
 
       // Open WA Web in a new tab

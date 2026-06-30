@@ -67,7 +67,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   const handleCopyTextMessage = (slip: SlipData) => {
     const slipId = slip.id || `demo-${slip.nik}`;
     const publicUrl = `${window.location.origin}/slip/${slipId}`;
-    const message = generateWhatsAppMessage(slip.nama, slip.bulan, publicUrl);
+    const message = generateWhatsAppMessage(slip, publicUrl);
     
     navigator.clipboard.writeText(message).then(() => {
       setCopiedTextId(slipId);
